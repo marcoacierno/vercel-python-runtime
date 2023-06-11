@@ -32,19 +32,19 @@ async function pipenvConvert(cmd: string, srcDir: string) {
   }
 }
 
-async function collectstatic(srcDir: string, pythonPath) {
+async function collectstatic(srcDir: string, _pythonPath: any) {
   console.log("collecting static!");
   // const globtest = await glob("**", srcDir);
   // console.log("Running collectstatic...", srcDir, globtest);
 
-  const vers = await execa.stdout(pythonPath, ["--version"], {
+  const vers = await execa.stdout("python3.9", ["--version"], {
     cwd: srcDir,
   });
   console.log("tt ->", vers);
 
   try {
     const out = await execa.stdout(
-      "python",
+      "python3.9",
       ["manage.py", "collectstatic", "--no-input"],
       {
         cwd: srcDir,
