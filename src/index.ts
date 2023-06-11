@@ -33,6 +33,7 @@ async function pipenvConvert(cmd: string, srcDir: string) {
 }
 
 async function collectstatic(srcDir: string) {
+  console.log("collecting static!");
   debug("Running collectstatic...");
   try {
     const out = await execa.stdout(
@@ -44,7 +45,7 @@ async function collectstatic(srcDir: string) {
     );
     console.log("Collectstatic output " + out);
   } catch (err) {
-    console.log('Failed to run "collectstatic"');
+    console.log('Failed to run "collectstatic"', err);
     throw err;
   }
 }
@@ -194,8 +195,9 @@ export const build = async ({
       meta,
     });
   }
-
+  console.log("run collect static!");
   await collectstatic(workPath);
+  console.log("after static!");
 
   const originalPyPath = join(__dirname, "..", "vc_init.py");
   const originalHandlerPyContents = await readFile(originalPyPath, "utf8");
