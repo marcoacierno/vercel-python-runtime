@@ -35,7 +35,12 @@ async function pipenvConvert(cmd: string, srcDir: string) {
 async function collectstatic(srcDir: string) {
   console.log("collecting static!");
   const globtest = await glob("**", srcDir);
-  debug("Running collectstatic...", srcDir, globtest);
+  console.log("Running collectstatic...", srcDir, globtest);
+
+  const vers = await execa.stdout("python", ["--version"], {
+    cwd: srcDir,
+  });
+  console.log("tt", vers);
 
   try {
     const out = await execa.stdout(
