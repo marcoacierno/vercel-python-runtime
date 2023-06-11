@@ -32,15 +32,15 @@ async function pipenvConvert(cmd: string, srcDir: string) {
   }
 }
 
-async function collectstatic(srcDir: string) {
+async function collectstatic(srcDir: string, pythonPath) {
   console.log("collecting static!");
   // const globtest = await glob("**", srcDir);
   // console.log("Running collectstatic...", srcDir, globtest);
 
-  const vers = await execa.stdout("python", ["--version"], {
+  const vers = await execa.stdout(pythonPath, ["--version"], {
     cwd: srcDir,
   });
-  console.log("tt", vers);
+  console.log("tt ->", vers);
 
   try {
     const out = await execa.stdout(
@@ -203,7 +203,7 @@ export const build = async ({
     });
   }
   console.log("run collect static!");
-  await collectstatic(workPath);
+  await collectstatic(workPath, pythonVersion.pythonPath);
   console.log("after static!");
 
   const originalPyPath = join(__dirname, "..", "vc_init.py");
