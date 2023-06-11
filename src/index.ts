@@ -168,8 +168,6 @@ export const build = async ({
     process.env.PYTHONPATH = tempDir;
     const convertCmd = join(tempDir, "bin", "pipfile2req");
     await pipenvConvert(convertCmd, pipfileLockDir);
-
-    await collectstatic(tempDir);
   }
 
   fsFiles = await glob("**", workPath);
@@ -196,6 +194,8 @@ export const build = async ({
       meta,
     });
   }
+
+  await collectstatic(workPath);
 
   const originalPyPath = join(__dirname, "..", "vc_init.py");
   const originalHandlerPyContents = await readFile(originalPyPath, "utf8");
