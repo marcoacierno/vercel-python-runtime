@@ -32,6 +32,23 @@ async function pipenvConvert(cmd: string, srcDir: string) {
   }
 }
 
+async function collectstatic(srcDir: string) {
+  debug("Running collectstatic...");
+  try {
+    const out = await execa.stdout(
+      "python manage.py collectstatic --no-input",
+      [],
+      {
+        cwd: srcDir,
+      }
+    );
+    console.log("Collectstatic output " + out);
+  } catch (err) {
+    console.log('Failed to run "collectstatic"');
+    throw err;
+  }
+}
+
 export const version = 3;
 
 export async function downloadFilesInWorkPath({
@@ -151,6 +168,8 @@ export const build = async ({
     process.env.PYTHONPATH = tempDir;
     const convertCmd = join(tempDir, "bin", "pipfile2req");
     await pipenvConvert(convertCmd, pipfileLockDir);
+
+    await collectstatic(tempDir);
   }
 
   fsFiles = await glob("**", workPath);
