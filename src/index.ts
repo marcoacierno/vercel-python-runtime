@@ -34,11 +34,13 @@ async function pipenvConvert(cmd: string, srcDir: string) {
 
 async function collectstatic(srcDir: string) {
   console.log("collecting static!");
-  debug("Running collectstatic...");
+  const globtest = await glob("**", srcDir);
+  debug("Running collectstatic...", srcDir, globtest);
+
   try {
     const out = await execa.stdout(
-      "python manage.py collectstatic --no-input",
-      [],
+      "python",
+      ["manage.py", "collectstatic", "--no-input"],
       {
         cwd: srcDir,
       }
