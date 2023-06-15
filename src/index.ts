@@ -94,6 +94,11 @@ export const build = async ({
     meta,
   });
 
+  //  sudo apt-get install openssl
+  await execa("apt-get", ["install", "openssl"], {
+    cwd: workPath,
+  });
+
   await execa(pythonVersion.pipPath, ["install", "pdm"], {
     cwd: workPath,
   });
