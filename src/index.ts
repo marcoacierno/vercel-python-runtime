@@ -102,7 +102,11 @@ export const build = async ({
     cwd: workPath,
   });
 
-  console.log("!!", pythonVersion);
+  const out = await execa("python3.10", ["--version"], {
+    cwd: workPath,
+  });
+  console.log("!!", pythonVersion, "out", out);
+
   await execa(pythonVersion.pipPath, ["install", "pdm"], {
     cwd: workPath,
   });
