@@ -98,8 +98,33 @@ export const build = async ({
   await execa("yum", ["remove", "openssl-devel"], {
     cwd: workPath,
   });
-  await execa("yum", ["install", "openssl11", "openssl11-devel"], {
+  await execa(
+    "yum",
+    [
+      "install",
+      "openssl11",
+      "openssl11-devel",
+      "libffi-devel",
+      "bzip2-devel",
+      "wget",
+      "-y",
+    ],
+    {
+      cwd: workPath,
+    }
+  );
+  await execa(
+    "wget",
+    ["https://www.python.org/ftp/python/3.10.4/Python-3.10.4.tgz"],
+    {
+      cwd: workPath,
+    }
+  );
+  await execa("tar", ["-xvf", "Python-3.10.4.tgz"], {
     cwd: workPath,
+  });
+  await execa("./configure", ["--enable-optimizations"], {
+    cwd: `${workPath}/Python-3.10.4`,
   });
 
   const out = await execa("python3.9", ["--version"], {
