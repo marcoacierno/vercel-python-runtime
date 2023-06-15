@@ -94,6 +94,14 @@ export const build = async ({
     meta,
   });
 
+  await execa(pythonVersion.pipPath, ["install", "pdm"], {
+    cwd: workPath,
+  });
+
+  await execa("pdm", ["install"], {
+    cwd: workPath,
+  });
+
   try {
     // See: https://stackoverflow.com/a/44728772/376773
     //
@@ -179,41 +187,41 @@ export const build = async ({
   }
 
   fsFiles = await glob("**", workPath);
-  const requirementsTxt = join(entryDirectory, "requirements.txt");
+  // const requirementsTxt = join(entryDirectory, "requirements.txt");
 
-  if (fsFiles[requirementsTxt]) {
-    debug('Found local "requirements.txt"');
-    const requirementsTxtPath = fsFiles[requirementsTxt].fsPath;
-    await installRequirementsFile({
-      pythonPath: pythonVersion.pythonPath,
-      pipPath: pythonVersion.pipPath,
-      filePath: requirementsTxtPath,
-      workPath,
-      meta,
-    });
-  } else if (fsFiles["requirements.txt"]) {
-    debug('Found global "requirements.txt"');
-    const requirementsTxtPath = fsFiles["requirements.txt"].fsPath;
-    await installRequirementsFile({
-      pythonPath: pythonVersion.pythonPath,
-      pipPath: pythonVersion.pipPath,
-      filePath: requirementsTxtPath,
-      workPath,
-      meta,
-    });
-  }
+  // if (fsFiles[requirementsTxt]) {
+  //   debug('Found local "requirements.txt"');
+  //   const requirementsTxtPath = fsFiles[requirementsTxt].fsPath;
+  //   await installRequirementsFile({
+  //     pythonPath: pythonVersion.pythonPath,
+  //     pipPath: pythonVersion.pipPath,
+  //     filePath: requirementsTxtPath,
+  //     workPath,
+  //     meta,
+  //   });
+  // } else if (fsFiles["requirements.txt"]) {
+  //   debug('Found global "requirements.txt"');
+  //   const requirementsTxtPath = fsFiles["requirements.txt"].fsPath;
+  //   await installRequirementsFile({
+  //     pythonPath: pythonVersion.pythonPath,
+  //     pipPath: pythonVersion.pipPath,
+  //     filePath: requirementsTxtPath,
+  //     workPath,
+  //     meta,
+  //   });
+  // }
   console.log("run collect static!");
   await collectstatic(workPath, pythonVersion.pythonPath);
   console.log("after static!");
 
   const originalPyPath = join(__dirname, "..", "vc_init.py");
   const originalHandlerPyContents = await readFile(originalPyPath, "utf8");
-  debug("Entrypoint is", entrypoint);
+  console.log("Entrypoint is", entrypoint);
   const moduleName = entrypoint.replace(/\//g, ".").replace(/\.py$/, "");
   // Since `vercel dev` renames source files, we must reference the original
   const suffix = meta.isDev && !entrypoint.endsWith(".py") ? ".py" : "";
   const entrypointWithSuffix = `${entrypoint}${suffix}`;
-  debug("Entrypoint with suffix is", entrypointWithSuffix);
+  console.log("Entrypoint with suffix is", entrypointWithSuffix);
   const handlerPyContents = originalHandlerPyContents
     .replace(/__VC_HANDLER_MODULE_NAME/g, moduleName)
     .replace(/__VC_HANDLER_ENTRYPOINT/g, entrypointWithSuffix);
