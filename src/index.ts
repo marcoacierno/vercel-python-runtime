@@ -102,6 +102,7 @@ export const build = async ({
     cwd: workPath,
   });
 
+  console.log("!!", pythonVersion);
   await execa(pythonVersion.pipPath, ["install", "pdm"], {
     cwd: workPath,
   });
