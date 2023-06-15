@@ -95,7 +95,7 @@ export const build = async ({
   });
 
   //  sudo apt-get install openssl
-  await execa("yum", ["uninstall", "openssl-devel"], {
+  await execa("yum", ["remove", "openssl-devel"], {
     cwd: workPath,
   });
   await execa("yum", ["install", "openssl11", "openssl11-devel"], {
