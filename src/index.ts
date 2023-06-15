@@ -126,6 +126,12 @@ export const build = async ({
   await execa("./configure", ["--enable-optimizations"], {
     cwd: `${workPath}/Python-3.10.4`,
   });
+  await execa("make", ["-j", "$(nproc)"], {
+    cwd: `${workPath}/Python-3.10.4`,
+  });
+  await execa("make", ["altinstall"], {
+    cwd: `${workPath}/Python-3.10.4`,
+  });
 
   const out = await execa("python3.9", ["--version"], {
     cwd: workPath,
