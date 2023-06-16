@@ -2,6 +2,7 @@ import { join, dirname, basename } from "path";
 import execa from "execa";
 import fs from "fs";
 import { promisify } from "util";
+import os from "os";
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 import {
@@ -126,7 +127,7 @@ export const build = async ({
   await execa("./configure", ["--enable-optimizations"], {
     cwd: `${workPath}/Python-3.10.4`,
   });
-  await execa("make", ["-j", "$(nproc)"], {
+  await execa("make", ["-j", os.cpus().length.toString()], {
     cwd: `${workPath}/Python-3.10.4`,
   });
   await execa("make", ["altinstall"], {
