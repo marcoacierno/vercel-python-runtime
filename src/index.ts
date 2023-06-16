@@ -143,6 +143,10 @@ export const build = async ({
     cwd: workPath,
   });
 
+  await execa("pdm", ["config", "python.use_venv", "false"], {
+    cwd: workPath,
+  });
+
   await execa("pdm", ["sync", "--prod", "--no-editable"], {
     cwd: workPath,
   });
