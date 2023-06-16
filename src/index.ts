@@ -134,7 +134,7 @@ export const build = async ({
     cwd: `${workPath}/Python-3.10.4`,
   });
 
-  const out = await execa("python3.9", ["--version"], {
+  const out = await execa("python3.10", ["--version"], {
     cwd: workPath,
   });
   console.log("!!", pythonVersion, "out", out);
