@@ -116,22 +116,22 @@ export const build = async ({
   );
   await execa(
     "wget",
-    ["https://www.python.org/ftp/python/3.10.4/Python-3.10.4.tgz"],
+    ["https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tgz"],
     {
       cwd: workPath,
     }
   );
-  await execa("tar", ["-xvf", "Python-3.10.4.tgz"], {
+  await execa("tar", ["-xvf", "Python-3.10.8.tgz"], {
     cwd: workPath,
   });
   await execa("./configure", ["--enable-optimizations"], {
-    cwd: `${workPath}/Python-3.10.4`,
+    cwd: `${workPath}/Python-3.10.8`,
   });
   await execa("make", ["-j", os.cpus().length.toString()], {
-    cwd: `${workPath}/Python-3.10.4`,
+    cwd: `${workPath}/Python-3.10.8`,
   });
   await execa("make", ["altinstall"], {
-    cwd: `${workPath}/Python-3.10.4`,
+    cwd: `${workPath}/Python-3.10.8`,
   });
 
   const out = await execa("python3.10", ["--version"], {
@@ -143,9 +143,12 @@ export const build = async ({
     cwd: workPath,
   });
 
-  await execa("pdm", ["install"], {
+  await execa("pdm", ["sync", "--prod", "--no-editable"], {
     cwd: workPath,
   });
+
+  let teest = await glob("**", workPath);
+  console.log("hlelel", teest);
 
   try {
     // See: https://stackoverflow.com/a/44728772/376773
