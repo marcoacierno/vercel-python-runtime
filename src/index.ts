@@ -114,6 +114,9 @@ export const build = async ({
 
   await execa("python3.9", ["manage.py", "collectstatic"], {
     cwd: workPath,
+    env: {
+      DATABASE_URL: "sqlite:///db.sqlite3",
+    },
   });
 
   const globOptions: GlobOptions = {
