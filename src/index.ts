@@ -115,6 +115,9 @@ export const build = async ({
   process.env.PYTHONPATH = workPath;
   await execa("python3.9", ["manage.py", "collectstatic"], {
     cwd: workPath,
+    env: {
+      DATABASE_URL: "empty",
+    },
   });
 
   const globOptions: GlobOptions = {
