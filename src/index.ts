@@ -2,7 +2,6 @@ import { join, dirname, basename } from "path";
 import execa from "execa";
 import fs from "fs";
 import { promisify } from "util";
-import os from "os";
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 import {
@@ -29,31 +28,6 @@ async function pipenvConvert(cmd: string, srcDir: string) {
     fs.writeFileSync(join(srcDir, "requirements.txt"), out);
   } catch (err) {
     console.log('Failed to run "pipfile2req"');
-    throw err;
-  }
-}
-
-async function collectstatic(srcDir: string, _pythonPath: any) {
-  console.log("collecting static!");
-  // const globtest = await glob("**", srcDir);
-  // console.log("Running collectstatic...", srcDir, globtest);
-
-  const vers = await execa.stdout("python3.9", ["--version"], {
-    cwd: srcDir,
-  });
-  console.log("tt ->", vers);
-
-  try {
-    const out = await execa.stdout(
-      "python3.9",
-      ["manage.py", "collectstatic", "--no-input"],
-      {
-        cwd: srcDir,
-      }
-    );
-    console.log("Collectstatic output " + out);
-  } catch (err) {
-    console.log('Failed to run "collectstatic"', err);
     throw err;
   }
 }
@@ -95,82 +69,6 @@ export const build = async ({
     meta,
   });
 
-  //  sudo apt-get install openssl
-  await execa("yum", ["remove", "openssl-devel"], {
-    cwd: workPath,
-  });
-  await execa(
-    "yum",
-    [
-      "install",
-      "openssl11",
-      "openssl11-devel",
-      "libffi-devel",
-      "bzip2-devel",
-      "wget",
-      "-y",
-    ],
-    {
-      cwd: workPath,
-    }
-  );
-  await execa(
-    "wget",
-    ["https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tgz"],
-    {
-      cwd: workPath,
-    }
-  );
-  await execa("tar", ["-xvf", "Python-3.10.8.tgz"], {
-    cwd: workPath,
-  });
-  await execa("./configure", ["--enable-optimizations"], {
-    cwd: `${workPath}/Python-3.10.8`,
-  });
-  await execa("make", ["-j", os.cpus().length.toString()], {
-    cwd: `${workPath}/Python-3.10.8`,
-  });
-  await execa("make", ["altinstall"], {
-    cwd: `${workPath}/Python-3.10.8`,
-  });
-
-  const out = await execa("python3.10", ["--version"], {
-    cwd: workPath,
-  });
-  console.log("!!", pythonVersion, "out", out);
-
-  await execa(pythonVersion.pipPath, ["install", "pdm"], {
-    cwd: workPath,
-  });
-
-  await execa("pdm", ["config", "python.use_venv", "false"], {
-    cwd: workPath,
-  });
-
-  await execa("pdm", ["sync", "--prod", "--no-editable"], {
-    cwd: workPath,
-  });
-
-  let teest = await glob("**", workPath);
-  console.log("hlelel", teest);
-
-  try {
-    // See: https://stackoverflow.com/a/44728772/376773
-    //
-    // The `setup.cfg` is required for `vercel dev` on MacOS, where without
-    // this file being present in the src dir then this error happens:
-    //
-    // distutils.errors.DistutilsOptionError: must supply either home
-    // or prefix/exec-prefix -- not both
-    if (meta.isDev) {
-      const setupCfg = join(workPath, "setup.cfg");
-      await writeFile(setupCfg, "[install]\nprefix=\n");
-    }
-  } catch (err) {
-    console.log('Failed to create "setup.cfg" file');
-    throw err;
-  }
-
   console.log("Installing required dependencies...");
 
   await installRequirement({
@@ -182,98 +80,51 @@ export const build = async ({
     meta,
   });
 
+  await installRequirement({
+    pythonPath: pythonVersion.pythonPath,
+    pipPath: pythonVersion.pipPath,
+    dependency: "urllib3",
+    version: "1.26.6",
+    workPath,
+    meta,
+  });
+
   let fsFiles = await glob("**", workPath);
   const entryDirectory = dirname(entrypoint);
 
-  const pipfileLockDir = fsFiles[join(entryDirectory, "Pipfile.lock")]
-    ? join(workPath, entryDirectory)
-    : fsFiles["Pipfile.lock"]
-    ? workPath
-    : null;
+  fsFiles = await glob("**", workPath);
+  const requirementsTxt = join(entryDirectory, "requirements.txt");
 
-  if (pipfileLockDir) {
-    debug('Found "Pipfile.lock"');
-
-    let lock: {
-      _meta?: {
-        requires?: {
-          python_version?: string;
-        };
-      };
-    } = {};
-    try {
-      const json = await readFile(join(pipfileLockDir, "Pipfile.lock"), "utf8");
-      lock = JSON.parse(json);
-    } catch (err) {
-      throw new NowBuildError({
-        code: "INVALID_PIPFILE_LOCK",
-        message: "Unable to parse Pipfile.lock",
-      });
-    }
-
-    pythonVersion = getSupportedPythonVersion({
-      isDev: meta.isDev,
-      pipLockPythonVersion: lock?._meta?.requires?.python_version,
-    });
-
-    // Convert Pipenv.Lock to requirements.txt.
-    // We use a different`workPath` here because we want `pipfile-requirements` and it's dependencies
-    // to not be part of the lambda environment. By using pip's `--target` directive we can isolate
-    // it into a separate folder.
-    const tempDir = await getWriteableDirectory();
-    await installRequirement({
+  if (fsFiles[requirementsTxt]) {
+    debug('Found local "requirements.txt"');
+    const requirementsTxtPath = fsFiles[requirementsTxt].fsPath;
+    await installRequirementsFile({
       pythonPath: pythonVersion.pythonPath,
       pipPath: pythonVersion.pipPath,
-      dependency: "pipfile-requirements",
-      version: "0.3.0",
-      workPath: tempDir,
+      filePath: requirementsTxtPath,
+      workPath,
       meta,
-      args: ["--no-warn-script-location"],
     });
-
-    // Python needs to know where to look up all the packages we just installed.
-    // We tell it to use the same location as used with `--target`
-    process.env.PYTHONPATH = tempDir;
-    const convertCmd = join(tempDir, "bin", "pipfile2req");
-    await pipenvConvert(convertCmd, pipfileLockDir);
+  } else if (fsFiles["requirements.txt"]) {
+    debug('Found global "requirements.txt"');
+    const requirementsTxtPath = fsFiles["requirements.txt"].fsPath;
+    await installRequirementsFile({
+      pythonPath: pythonVersion.pythonPath,
+      pipPath: pythonVersion.pipPath,
+      filePath: requirementsTxtPath,
+      workPath,
+      meta,
+    });
   }
-
-  fsFiles = await glob("**", workPath);
-  // const requirementsTxt = join(entryDirectory, "requirements.txt");
-
-  // if (fsFiles[requirementsTxt]) {
-  //   debug('Found local "requirements.txt"');
-  //   const requirementsTxtPath = fsFiles[requirementsTxt].fsPath;
-  //   await installRequirementsFile({
-  //     pythonPath: pythonVersion.pythonPath,
-  //     pipPath: pythonVersion.pipPath,
-  //     filePath: requirementsTxtPath,
-  //     workPath,
-  //     meta,
-  //   });
-  // } else if (fsFiles["requirements.txt"]) {
-  //   debug('Found global "requirements.txt"');
-  //   const requirementsTxtPath = fsFiles["requirements.txt"].fsPath;
-  //   await installRequirementsFile({
-  //     pythonPath: pythonVersion.pythonPath,
-  //     pipPath: pythonVersion.pipPath,
-  //     filePath: requirementsTxtPath,
-  //     workPath,
-  //     meta,
-  //   });
-  // }
-  console.log("run collect static!");
-  await collectstatic(workPath, pythonVersion.pythonPath);
-  console.log("after static!");
 
   const originalPyPath = join(__dirname, "..", "vc_init.py");
   const originalHandlerPyContents = await readFile(originalPyPath, "utf8");
-  console.log("Entrypoint is", entrypoint);
+  debug("Entrypoint is", entrypoint);
   const moduleName = entrypoint.replace(/\//g, ".").replace(/\.py$/, "");
   // Since `vercel dev` renames source files, we must reference the original
   const suffix = meta.isDev && !entrypoint.endsWith(".py") ? ".py" : "";
   const entrypointWithSuffix = `${entrypoint}${suffix}`;
-  console.log("Entrypoint with suffix is", entrypointWithSuffix);
+  debug("Entrypoint with suffix is", entrypointWithSuffix);
   const handlerPyContents = originalHandlerPyContents
     .replace(/__VC_HANDLER_MODULE_NAME/g, moduleName)
     .replace(/__VC_HANDLER_ENTRYPOINT/g, entrypointWithSuffix);
@@ -299,8 +150,6 @@ export const build = async ({
     runtime: pythonVersion.runtime,
     environment: {},
   });
-
-  console.log("hello there!");
 
   return { output: lambda };
 };
