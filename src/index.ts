@@ -112,7 +112,7 @@ export const build = async ({
 
   await writeFile(join(workPath, `${handlerPyFilename}.py`), handlerPyContents);
 
-  await execa(pythonVersion.pythonPath, ["manage.py", "collectstatic"], {
+  await execa("python3.9", ["manage.py", "collectstatic"], {
     cwd: workPath,
   });
 
