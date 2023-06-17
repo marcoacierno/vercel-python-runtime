@@ -1,6 +1,6 @@
 import { join, dirname, basename } from "path";
 // import execa from "execa";
-import fs from "fs";
+import fs, { existsSync } from "fs";
 import { promisify } from "util";
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -66,15 +66,6 @@ export const build = async ({
     meta,
   });
 
-  await installRequirement({
-    pythonPath: pythonVersion.pythonPath,
-    pipPath: pythonVersion.pipPath,
-    dependency: "urllib3",
-    version: "1.26.11",
-    workPath,
-    meta,
-  });
-
   let fsFiles = await glob("**", workPath);
   const entryDirectory = dirname(entrypoint);
 
@@ -120,6 +111,10 @@ export const build = async ({
   const handlerPyFilename = "vc__handler__python";
 
   await writeFile(join(workPath, `${handlerPyFilename}.py`), handlerPyContents);
+
+  if (existsSync(join(workPath, "psycopg2"))) {
+    console.log("psycopg2 exists sync");
+  }
 
   const globOptions: GlobOptions = {
     // @ts-ignore
