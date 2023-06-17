@@ -66,15 +66,6 @@ export const build = async ({
     meta,
   });
 
-  await installRequirement({
-    pythonPath: pythonVersion.pythonPath,
-    pipPath: pythonVersion.pipPath,
-    dependency: "psycopg2-binary",
-    version: "2.9.6",
-    workPath,
-    meta,
-  });
-
   let fsFiles = await glob("**", workPath);
   const entryDirectory = dirname(entrypoint);
 
