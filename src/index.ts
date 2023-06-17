@@ -7,30 +7,16 @@ const writeFile = promisify(fs.writeFile);
 import {
   GlobOptions,
   BuildOptions,
-  getWriteableDirectory,
+  // getWriteableDirectory,
   download,
   glob,
   createLambda,
   shouldServe,
   debug,
-  NowBuildError,
+  // NowBuildError,
 } from "@vercel/build-utils";
 import { installRequirement, installRequirementsFile } from "./install";
-import { getLatestPythonVersion, getSupportedPythonVersion } from "./version";
-
-async function pipenvConvert(cmd: string, srcDir: string) {
-  debug("Running pipfile2req...");
-  try {
-    const out = await execa.stdout(cmd, [], {
-      cwd: srcDir,
-    });
-    debug("Contents of requirements.txt is: " + out);
-    fs.writeFileSync(join(srcDir, "requirements.txt"), out);
-  } catch (err) {
-    console.log('Failed to run "pipfile2req"');
-    throw err;
-  }
-}
+import { getLatestPythonVersion } from "./version";
 
 export const version = 3;
 
