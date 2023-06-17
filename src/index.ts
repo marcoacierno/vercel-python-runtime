@@ -1,6 +1,6 @@
 import { join, dirname, basename } from "path";
-// import execa from "execa";
-import fs, { existsSync } from "fs";
+import execa from "execa";
+import fs from "fs";
 import { promisify } from "util";
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -112,9 +112,9 @@ export const build = async ({
 
   await writeFile(join(workPath, `${handlerPyFilename}.py`), handlerPyContents);
 
-  if (existsSync(join(workPath, "psycopg2"))) {
-    console.log("psycopg2 exists sync");
-  }
+  await execa(pythonVersion.pythonPath, ["manage.py", "collectstatic"], {
+    cwd: workPath,
+  });
 
   const globOptions: GlobOptions = {
     // @ts-ignore
