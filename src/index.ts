@@ -70,7 +70,7 @@ export const build = async ({
     pythonPath: pythonVersion.pythonPath,
     pipPath: pythonVersion.pipPath,
     dependency: "urllib3",
-    version: "1.26.6",
+    version: "1.26.11",
     workPath,
     meta,
   });
